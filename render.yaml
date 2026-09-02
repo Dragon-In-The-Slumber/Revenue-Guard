@@ -74,10 +74,7 @@ services:
     startCommand: npm start
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: revenueguard-api
-          property: url
+        sync: false
 
 # ----------------------------------------------------
 # Managed Databases

@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5433/revenueguard"
     redis_url: str = "redis://localhost:6380/0"
+    
+    use_celery: bool = False
     celery_broker_url: str = "amqp://guest:guest@localhost:5672//"
     celery_result_backend: str = "redis://localhost:6380/1"
     

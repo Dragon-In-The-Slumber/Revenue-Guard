@@ -2,8 +2,9 @@ from fastapi import FastAPI, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any
 from src.config import settings
-from src.workers.recovery_tasks import run_recovery_pipeline
+from src.workers.recovery_tasks import run_recovery_pipeline, execute_graph_sync
 from src.models.transaction import Transaction
+import uuid
 
 app = FastAPI(
     title="RevenueGuard API",
@@ -15,25 +16,34 @@ class BatchRequest(BaseModel):
     transactions: List[Transaction]
 
 @app.post("/webhooks/razorpay/payment.failed")
-async def handle_payment_failed(transaction: Transaction):
+async def handle_payment_failed(transaction: Transaction, background_tasks: BackgroundTasks):
     """
     Ingest a single payment failure webhook from Razorpay.
     """
-    # Dispatch to Celery worker asynchronously
-    task = run_recovery_pipeline.delay(transaction.model_dump())
+    if settings.use_celery:
+        # Option 1: Dispatch to Celery worker asynchronously
+        task = run_recovery_pipeline.delay(transaction.model_dump())
+        task_id = str(task.id)
+    else:
+        # Option 2: Run natively in background tasks (Free Tier fallback)
+        background_tasks.add_task(execute_graph_sync, transaction.model_dump())
+        task_id = f"sync-{uuid.uuid4().hex[:8]}"
     
-    return {"status": "accepted", "task_id": str(task.id), "transaction_id": transaction.transaction_id}
+    return {"status": "accepted", "task_id": task_id, "transaction_id": transaction.transaction_id}
 
 @app.post("/api/batch")
-async def process_batch(request: BatchRequest):
+async def process_batch(request: BatchRequest, background_tasks: BackgroundTasks):
     """
     Process a batch of failed transactions (e.g., from CSV upload or Tally sync).
     """
     task_ids = []
     for tx in request.transactions:
-        # Fan out processing across Celery workers
-        task = run_recovery_pipeline.delay(tx.model_dump())
-        task_ids.append(str(task.id))
+        if settings.use_celery:
+            task = run_recovery_pipeline.delay(tx.model_dump())
+            task_ids.append(str(task.id))
+        else:
+            background_tasks.add_task(execute_graph_sync, tx.model_dump())
+            task_ids.append(f"sync-{uuid.uuid4().hex[:8]}")
         
     return {
         "status": "accepted",

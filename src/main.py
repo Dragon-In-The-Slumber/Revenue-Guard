@@ -2,7 +2,7 @@ from fastapi import FastAPI, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any
 from src.config import settings
-from src.workers.recovery_tasks import run_recovery_pipeline, execute_graph_sync
+from src.workers.recovery_tasks import execute_graph_async
 from src.models.transaction import Transaction
 from src.persistence.audit_store import audit_store
 from src.persistence.database import db
@@ -87,14 +87,9 @@ async def handle_payment_failed(payload: Dict[str, Any], background_tasks: Backg
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Failed to parse webhook payload: {str(e)}")
 
-    if settings.use_celery:
-        # Option 1: Dispatch to Celery worker asynchronously
-        task = run_recovery_pipeline.delay(transaction.model_dump())
-        task_id = str(task.id)
-    else:
-        # Option 2: Run natively in background tasks (Free Tier fallback)
-        background_tasks.add_task(execute_graph_sync, transaction.model_dump())
-        task_id = f"sync-{uuid.uuid4().hex[:8]}"
+    # Run natively in background tasks (Microservice pattern without celery overhead)
+    background_tasks.add_task(execute_graph_async, transaction.model_dump())
+    task_id = f"sync-{uuid.uuid4().hex[:8]}"
     
     return {"status": "accepted", "task_id": task_id, "transaction_id": transaction.transaction_id}
 
@@ -105,12 +100,8 @@ async def process_batch(request: BatchRequest, background_tasks: BackgroundTasks
     """
     task_ids = []
     for tx in request.transactions:
-        if settings.use_celery:
-            task = run_recovery_pipeline.delay(tx.model_dump())
-            task_ids.append(str(task.id))
-        else:
-            background_tasks.add_task(execute_graph_sync, tx.model_dump())
-            task_ids.append(f"sync-{uuid.uuid4().hex[:8]}")
+        background_tasks.add_task(execute_graph_async, tx.model_dump())
+        task_ids.append(f"sync-{uuid.uuid4().hex[:8]}")
         
     return {
         "status": "accepted",

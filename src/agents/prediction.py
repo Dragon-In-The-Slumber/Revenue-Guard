@@ -2,6 +2,9 @@ from typing import Dict, Any
 from datetime import datetime
 from src.graph.state import RevenueGuardState
 
+from src.agents.fault_handler import fault_tolerant
+
+@fault_tolerant(fallback_status="FAILED", next_agent_on_fail="outreach")
 def prediction_node(state: RevenueGuardState) -> Dict[str, Any]:
     """
     The Prediction Agent handles "at_risk" transactions before they fully fail.

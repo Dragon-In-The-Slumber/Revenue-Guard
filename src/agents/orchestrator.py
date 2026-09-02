@@ -3,6 +3,9 @@ from datetime import datetime
 from langchain_core.messages import HumanMessage, SystemMessage
 from src.graph.state import RevenueGuardState
 
+from src.agents.fault_handler import fault_tolerant
+
+@fault_tolerant()
 def orchestrator_node(state: RevenueGuardState) -> Dict[str, Any]:
     """
     The Orchestrator acts as a router/supervisor.

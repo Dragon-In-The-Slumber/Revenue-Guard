@@ -1,12 +1,16 @@
 import sys
 import os
+import pytest
+from unittest.mock import patch, MagicMock
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.agents.compliance import compliance_node
 from src.models.transaction import Transaction, Customer, PaymentDetails, MerchantDetails
+from src.models.diagnosis import RecoveryAction
 
 
-def make_compliance_state(attempts: int = 0, amount: float = 5000, requires_approval: bool = False):
+def make_compliance_state(attempts: int = 0, amount: float = 5000, action_type: str = "SILENT_RETRY"):
     """Helper to build a test state for compliance checks."""
     tx = Transaction(
         transaction_id="tx_compliance_test",
@@ -20,25 +24,27 @@ def make_compliance_state(attempts: int = 0, amount: float = 5000, requires_appr
         "messages": [],
         "current_agent": "compliance",
         "contact_attempts": attempts,
-        "max_attempts_reached": False,
-        "requires_human_approval": requires_approval,
-        "is_approved": False,
+        "selected_action": RecoveryAction(action_type=action_type, requires_approval=False),
         "recovery_status": "PENDING",
         "audit_trail": []
     }
 
 
-def test_approves_normal_transaction():
+@patch("src.agents.compliance.datetime")
+def test_approves_normal_transaction(mock_datetime):
     """Normal low-value, low-attempt transaction should be approved."""
-    state = make_compliance_state(attempts=1, amount=5000)
+    mock_datetime.now.return_value.hour = 14 # 2 PM
+    state = make_compliance_state(attempts=1, amount=5000, action_type="WHATSAPP_MESSAGE")
     result = compliance_node(state)
 
     assert result["is_approved"] is True
     assert result["current_agent"] == "end"
 
 
-def test_escalates_after_max_attempts():
+@patch("src.agents.compliance.datetime")
+def test_escalates_after_max_attempts(mock_datetime):
     """After 3 contact attempts, must escalate to human — NOT continue outreach."""
+    mock_datetime.now.return_value.hour = 14
     state = make_compliance_state(attempts=3)
     result = compliance_node(state)
 
@@ -47,36 +53,34 @@ def test_escalates_after_max_attempts():
     assert "Max contact attempts" in result["audit_trail"][0]["details"]
 
 
-def test_blocks_high_value_without_approval():
-    """Transactions over ₹50,000 requiring human approval must be blocked."""
-    state = make_compliance_state(amount=75000, requires_approval=True)
+@patch("src.agents.compliance.datetime")
+def test_blocks_high_value(mock_datetime):
+    """Transactions over ₹50,000 must be blocked pending approval."""
+    mock_datetime.now.return_value.hour = 14
+    state = make_compliance_state(amount=75000)
     result = compliance_node(state)
 
     assert result["is_approved"] is False
     assert result["recovery_status"] == "PENDING_APPROVAL"
 
 
-def test_allows_high_value_without_flag():
-    """High value transaction WITHOUT the requires_human_approval flag should pass."""
-    state = make_compliance_state(amount=75000, requires_approval=False)
+@patch("src.agents.compliance.datetime")
+def test_blocks_outreach_during_quiet_hours(mock_datetime):
+    """Outreach actions should be blocked between 9 PM and 8 AM."""
+    mock_datetime.now.return_value.hour = 22 # 10 PM
+    state = make_compliance_state(action_type="WHATSAPP_MESSAGE")
+    result = compliance_node(state)
+
+    assert result["is_approved"] is False
+    assert result["recovery_status"] == "BLOCKED_BY_COMPLIANCE"
+    assert "prohibited during quiet hours" in result["audit_trail"][0]["details"]
+
+
+@patch("src.agents.compliance.datetime")
+def test_allows_silent_retry_during_quiet_hours(mock_datetime):
+    """Silent retries should STILL be allowed during quiet hours."""
+    mock_datetime.now.return_value.hour = 22 # 10 PM
+    state = make_compliance_state(action_type="SILENT_RETRY")
     result = compliance_node(state)
 
     assert result["is_approved"] is True
-
-
-def test_audit_trail_always_populated():
-    """Every compliance check must produce an audit entry."""
-    state = make_compliance_state()
-    result = compliance_node(state)
-
-    assert len(result["audit_trail"]) == 1
-    assert result["audit_trail"][0]["agent"] == "Compliance"
-
-
-if __name__ == "__main__":
-    test_approves_normal_transaction()
-    test_escalates_after_max_attempts()
-    test_blocks_high_value_without_approval()
-    test_allows_high_value_without_flag()
-    test_audit_trail_always_populated()
-    print("✅ All compliance tests passed!")

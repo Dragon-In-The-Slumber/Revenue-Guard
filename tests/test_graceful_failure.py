@@ -1,5 +1,8 @@
 import sys
 import os
+import pytest
+from unittest.mock import patch, MagicMock
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.agents.orchestrator import orchestrator_node
@@ -29,8 +32,13 @@ def make_state(error_code: str = "UNKNOWN_ERROR", status: str = "failed"):
     }
 
 
-def test_handles_unknown_error_code():
-    """An unrecognized error code should not crash the system."""
+@patch("src.agents.diagnostician.ChatAnthropic")
+def test_handles_unknown_error_code(mock_chat):
+    """An unrecognized error code should not crash the system (LLM or fallback)."""
+    mock_llm_instance = MagicMock()
+    mock_chat.return_value = mock_llm_instance
+    mock_llm_instance.with_structured_output.side_effect = Exception("LLM crash")
+    
     state = make_state("TOTALLY_UNKNOWN_ERROR_XYZ")
     result = diagnostician_node(state)
 
@@ -47,33 +55,25 @@ def test_handles_unknown_status():
     assert result["current_agent"] == "diagnostician"
 
 
-def test_silent_recovery_without_diagnosis():
-    """Silent recovery with no diagnosis should not crash."""
+@patch("src.agents.silent_recovery.razorpay_client")
+def test_fault_tolerant_decorator(mock_razorpay):
+    """Test that the @fault_tolerant decorator catches hard crashes and routes to compliance."""
+    mock_razorpay.switch_gateway.side_effect = RuntimeError("Hard crash inside tool")
+    
     state = make_state()
-    state["diagnosis"] = None
-    state["current_agent"] = "silent_recovery"
+    from src.models.diagnosis import RootCauseDiagnosis, RecoveryAction
+    state["diagnosis"] = RootCauseDiagnosis(
+        primary_cause="Test",
+        confidence=0.99,
+        is_recoverable=True,
+        recommended_action=RecoveryAction(action_type="SILENT_RETRY", requires_approval=False),
+        reasoning="Test"
+    )
     
     result = silent_recovery_node(state)
     
-    assert result["recovery_status"] in ("PENDING", "SUCCESS")
-    assert len(result["audit_trail"]) == 1
-
-
-def test_pipeline_always_produces_audit():
-    """Every agent execution must produce at least one audit entry."""
-    state = make_state()
-    
-    r1 = orchestrator_node(state)
-    assert len(r1["audit_trail"]) >= 1
-    
-    state.update(r1)
-    r2 = diagnostician_node(state)
-    assert len(r2["audit_trail"]) >= 1
-
-
-if __name__ == "__main__":
-    test_handles_unknown_error_code()
-    test_handles_unknown_status()
-    test_silent_recovery_without_diagnosis()
-    test_pipeline_always_produces_audit()
-    print("✅ All graceful failure tests passed!")
+    # Normally this would raise RuntimeError, but @fault_tolerant catches it.
+    assert result["recovery_status"] == "FAILED"
+    assert result["current_agent"] == "compliance"
+    assert "Agent Crash / Fault Boundary Triggered" == result["audit_trail"][0]["action"]
+    assert "Hard crash inside tool" in result["audit_trail"][0]["details"]

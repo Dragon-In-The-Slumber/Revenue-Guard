@@ -1,40 +1,51 @@
+"use client";
+
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function MetricsPanel() {
-  const metrics = [
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const { data, error, isLoading } = useSWR(`${apiUrl}/api/metrics`, fetcher, { refreshInterval: 5000 });
+
+  const metrics = data?.metrics || [
     {
       label: "Total Recovered",
-      value: "₹7,84,200",
-      change: "↑ 12%",
+      value: "...",
+      change: "",
       changeColor: "text-emerald-400",
-      subtitle: "vs last batch",
+      subtitle: "Loading...",
     },
     {
       label: "Silent Recoveries",
-      value: "42",
-      change: "42%",
+      value: "...",
+      change: "",
       changeColor: "text-gold",
-      subtitle: "of 100 failed transactions",
+      subtitle: "Loading...",
     },
     {
-      label: "Outreach Conversions",
-      value: "18",
-      change: "18%",
+      label: "Outreach Interventions",
+      value: "...",
+      change: "",
       changeColor: "text-gold",
-      subtitle: "via AI Negotiation",
+      subtitle: "Loading...",
     },
     {
       label: "Escalated",
-      value: "12",
-      change: "12%",
+      value: "...",
+      change: "",
       changeColor: "text-red-400",
-      subtitle: "to human review",
+      subtitle: "Loading...",
     },
   ];
 
+  if (error) return <div className="text-red-400">Failed to load metrics</div>;
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {metrics.map((m) => (
+      {metrics.map((m: any, idx: number) => (
         <div
-          key={m.label}
+          key={idx}
           className="glass-panel p-5 group hover:border-[#D9A353]/30 transition-all duration-300 cursor-default"
         >
           <h3 className="text-dim text-[11px] font-mono uppercase tracking-[0.15em]">

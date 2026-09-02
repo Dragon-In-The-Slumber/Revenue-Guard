@@ -33,7 +33,7 @@ def diagnostician_node(state: RevenueGuardState) -> Dict[str, Any]:
             model="claude-3-5-sonnet-20240620", 
             api_key=settings.anthropic_api_key,
             temperature=0,
-            max_retries=1,
+            max_retries=4,
             timeout=30
         )
         structured_llm = llm.with_structured_output(RootCauseDiagnosis)
@@ -54,38 +54,13 @@ def diagnostician_node(state: RevenueGuardState) -> Dict[str, Any]:
         
         diagnosis = structured_llm.invoke(prompt)
     except Exception as e:
-        logger.warning(f"LLM Diagnosis failed for {transaction.transaction_id}: {e}. Falling back to heuristic.")
-        
-    # 3. Fallback Heuristic if LLM fails
-    if not diagnosis:
-        error_code = transaction.payment.error_code
-        is_silent_possible = False
-        action_type = "WHATSAPP_MESSAGE"
-        
-        if "DOWNTIME" in error_code or "TIMEOUT" in error_code or bank_downtime_info.get("is_downtime"):
-            cause = "Infrastructure instability (Issuing bank or UPI switch timeout)"
-            is_silent_possible = True
-            action_type = "SCHEDULED_RETRY"
-        elif "INSUFFICIENT" in error_code:
-            cause = "Insufficient funds in customer account"
-            action_type = "WHATSAPP_MESSAGE"
-        elif "RISK" in error_code:
-            cause = "High-risk transaction blocked by gateway"
-            action_type = "EMAIL"
-        else:
-            cause = f"Generic failure: {error_code}"
-        
-        recommended_action = RecoveryAction(
-            action_type="SILENT_RETRY" if is_silent_possible else action_type,
-            requires_approval=False
-        )
-        
+        logger.error(f"LLM Diagnosis failed for {transaction.transaction_id}: {e}. Escalating.")
         diagnosis = RootCauseDiagnosis(
-            primary_cause=cause,
-            confidence=0.89,
-            is_recoverable=True,
-            recommended_action=recommended_action,
-            reasoning="Analyzed error code and historical bank downtime patterns using fallback heuristics."
+            primary_cause=f"AI Diagnostics Failed: {str(e)}",
+            confidence=0.0,
+            is_recoverable=False,
+            recommended_action=RecoveryAction(action_type="ESCALATE_TO_HUMAN", requires_approval=True),
+            reasoning="The LLM failed to return a valid diagnosis after multiple retries. Escalating to human."
         )
         
     audit_entry = {

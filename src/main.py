@@ -5,6 +5,7 @@ from src.config import settings
 from src.workers.recovery_tasks import execute_graph_async
 from src.models.transaction import Transaction
 from src.persistence.audit_store import audit_store
+from src.persistence.policy_store import policy_store
 from src.persistence.database import db
 import uuid
 from datetime import datetime
@@ -15,6 +16,7 @@ from contextlib import asynccontextmanager
 async def lifespan(app: FastAPI):
     await db.connect()
     await audit_store.initialize()
+    await policy_store.initialize()
     yield
     await db.disconnect()
 
@@ -112,6 +114,28 @@ async def process_batch(request: BatchRequest, background_tasks: BackgroundTasks
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+class PolicyRequest(BaseModel):
+    agent_name: str
+    policy_text: str
+
+@app.get("/api/policies")
+async def get_policies(agent_name: str = None):
+    """Retrieve all active policies, optionally filtered by agent."""
+    policies = await policy_store.get_active_policies(agent_name)
+    return {"policies": policies}
+
+@app.post("/api/policies")
+async def create_policy(request: PolicyRequest):
+    """Add a new natural language policy for an agent."""
+    await policy_store.add_policy(request.agent_name, request.policy_text)
+    return {"status": "success", "message": "Policy added"}
+
+@app.delete("/api/policies/{policy_id}")
+async def delete_policy(policy_id: int):
+    """Delete a policy."""
+    await policy_store.delete_policy(policy_id)
+    return {"status": "success", "message": "Policy deleted"}
 
 @app.get("/api/metrics")
 async def get_metrics():

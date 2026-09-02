@@ -18,6 +18,10 @@ export default function Home() {
           <a href="#metrics" className="text-white/60 text-sm hover:text-white transition-colors">Metrics</a>
           <a href="#pipeline" className="text-white/60 text-sm hover:text-white transition-colors">Live Feed</a>
           <a href="#audit" className="text-white/60 text-sm hover:text-white transition-colors">Audit Trail</a>
+          <Link href="/settings" className="text-white/60 text-sm hover:text-[#00F0FF] transition-colors flex items-center gap-1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            Agent Settings
+          </Link>
           <Link href="/pipeline" className="text-[#00F0FF] text-sm hover:text-white transition-colors font-mono">Graph View ↗</Link>
           <div className="flex items-center gap-2 bg-[#00F0FF]/10 border border-[#00F0FF]/30 px-3 py-1.5 rounded-full shadow-[0_0_10px_rgba(0,240,255,0.2)]">
             <div className="relative flex h-2 w-2">

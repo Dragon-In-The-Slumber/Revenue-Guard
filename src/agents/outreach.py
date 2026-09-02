@@ -31,7 +31,7 @@ def outreach_node(state: RevenueGuardState) -> Dict[str, Any]:
             model="claude-3-5-sonnet-20240620", 
             api_key=settings.anthropic_api_key,
             temperature=0.7,
-            max_retries=1,
+            max_retries=4,
             timeout=20
         )
         
@@ -53,10 +53,8 @@ def outreach_node(state: RevenueGuardState) -> Dict[str, Any]:
         response = llm.invoke(prompt)
         message_draft = response.content.strip()
     except Exception as e:
-        logger.warning(f"LLM Message drafting failed for {transaction.transaction_id}: {e}. Falling back to template.")
-        
-    if not message_draft:
-        message_draft = f"Hi {transaction.customer.name}, your payment of ₹{transaction.payment.amount} for {transaction.merchant.name} failed due to {diagnosis.primary_cause if diagnosis else 'an issue'}. Please tap the secure link below to retry."
+        logger.error(f"LLM Message drafting failed for {transaction.transaction_id}: {e}")
+        message_draft = f"[SYSTEM: Failed to generate message dynamically due to AI timeout. Fallback triggered.] Hi {transaction.customer.name}, your payment of ₹{transaction.payment.amount} failed. Please tap the secure link below to retry."
     
     audit_entry = {
         "agent": "Outreach",

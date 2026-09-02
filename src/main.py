@@ -7,6 +7,7 @@ from src.models.transaction import Transaction
 from src.persistence.audit_store import audit_store
 from src.persistence.database import db
 import uuid
+from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
@@ -36,10 +37,56 @@ class BatchRequest(BaseModel):
     transactions: List[Transaction]
 
 @app.post("/webhooks/razorpay/payment.failed")
-async def handle_payment_failed(transaction: Transaction, background_tasks: BackgroundTasks):
+async def handle_payment_failed(payload: Dict[str, Any], background_tasks: BackgroundTasks):
     """
     Ingest a single payment failure webhook from Razorpay.
     """
+    try:
+        # Check if it's our synthetic simulator payload
+        if "customer" in payload and "payment" in payload:
+            transaction = Transaction(**payload)
+        else:
+            # Parse real Razorpay Webhook
+            payment_entity = payload.get("payload", {}).get("payment", {}).get("entity", {})
+            if not payment_entity:
+                raise ValueError("Invalid Razorpay payload structure")
+                
+            tx_id = payment_entity.get("id", f"pay_{uuid.uuid4().hex[:8]}")
+            
+            # Amount in Razorpay is in paise, convert to INR
+            amount_in_rupees = payment_entity.get("amount", 0) / 100
+            
+            customer_data = {
+                "name": payment_entity.get("email", "Unknown").split("@")[0] if payment_entity.get("email") else "Unknown",
+                "email": payment_entity.get("email", "unknown@example.com"),
+                "phone": payment_entity.get("contact", ""),
+                "type": "B2C"
+            }
+            
+            payment_data = {
+                "amount": amount_in_rupees,
+                "currency": payment_entity.get("currency", "INR"),
+                "method": payment_entity.get("method", "card"),
+                "bank": payment_entity.get("bank", "Unknown Bank") or "Unknown Bank",
+                "timestamp": datetime.now().isoformat(),
+                "status": payment_entity.get("status", "failed"),
+                "error_code": payment_entity.get("error_code", "UNKNOWN_ERROR")
+            }
+            
+            merchant_data = {
+                "id": payload.get("account_id", "mer_unknown"),
+                "name": "Razorpay Merchant"
+            }
+            
+            transaction = Transaction(
+                transaction_id=tx_id,
+                customer=customer_data,
+                payment=payment_data,
+                merchant=merchant_data
+            )
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Failed to parse webhook payload: {str(e)}")
+
     if settings.use_celery:
         # Option 1: Dispatch to Celery worker asynchronously
         task = run_recovery_pipeline.delay(transaction.model_dump())

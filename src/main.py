@@ -222,9 +222,15 @@ async def get_events():
         elif "Approved" in r["action"]:
             dot = "bg-[#F0E7D6]"
             
+        reasoning = None
+        if "Reasoning:" in r["details"]:
+            parts = r["details"].split("Reasoning:", 1)
+            reasoning = parts[1].strip()
+            
         events.append({
             "agent": r["agent"],
-            "details": r["details"],
+            "details": r["details"].split("\n")[0] if "\n" in r["details"] else r["details"],
+            "reasoning": reasoning,
             "time": r["timestamp"].strftime("%H:%M:%S"),
             "dot": dot
         })
@@ -246,10 +252,29 @@ async def get_audit_trail(transaction_id: str):
         elif "Approved" in r["action"]:
             dot = "bg-[#F0E7D6]"
             
+        reasoning = None
+        confidence = None
+        recommended_action = None
+        
+        details = r["details"]
+        
+        # Simple parser to extract structured agent outputs from details string
+        if "Reasoning:" in details:
+            parts = details.split("Reasoning:", 1)
+            reasoning = parts[1].strip()
+            details = parts[0].strip()
+            
+        if "Recommended Action:" in details:
+            parts = details.split("Recommended Action:", 1)
+            recommended_action = parts[1].split("|")[0].strip() if "|" in parts[1] else parts[1].strip()
+            
         formatted_trail.append({
             "agent": r["agent"],
             "action": r["action"],
-            "details": r["details"],
+            "details": details,
+            "reasoning": reasoning,
+            "confidence": confidence,
+            "recommended_action": recommended_action,
             "time": r["timestamp"].strftime("%H:%M:%S"),
             "dotColor": dot
         })

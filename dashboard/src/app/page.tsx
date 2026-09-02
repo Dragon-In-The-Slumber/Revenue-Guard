@@ -2,6 +2,8 @@ import MetricsPanel from "../components/MetricsPanel";
 import RecoveryPipeline from "../components/RecoveryPipeline";
 import LiveEventFeed from "../components/LiveEventFeed";
 import AuditTrailViewer from "../components/AuditTrailViewer";
+import TriggerTestButton from "../components/TriggerTestButton";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -14,8 +16,9 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-6">
           <a href="#metrics" className="text-dim text-sm hover:text-[#F0E7D6] transition-colors">Metrics</a>
-          <a href="#pipeline" className="text-dim text-sm hover:text-[#F0E7D6] transition-colors">Pipeline</a>
+          <a href="#pipeline" className="text-dim text-sm hover:text-[#F0E7D6] transition-colors">Live Feed</a>
           <a href="#audit" className="text-dim text-sm hover:text-[#F0E7D6] transition-colors">Audit Trail</a>
+          <Link href="/pipeline" className="text-dim text-sm hover:text-gold transition-colors font-mono">Graph View ↗</Link>
           <div className="flex items-center gap-2 bg-[#14100B] border border-subtle px-3 py-1.5 rounded-full">
             <div className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -52,7 +55,10 @@ export default function Home() {
         <section id="pipeline" className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left: Pipeline (60%) */}
           <div className="lg:col-span-3 flex flex-col gap-4">
-            <p className="mono-label">02 / ACTIVE PIPELINE</p>
+            <div className="flex items-center justify-between">
+              <p className="mono-label">02 / ACTIVE PIPELINE</p>
+              <TriggerTestButton />
+            </div>
             <div className="glass-panel p-6 flex-1">
               <RecoveryPipeline />
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR from "swr";
+import Link from "next/link";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -26,9 +27,10 @@ export default function RecoveryPipeline() {
       ) : (
         <div className="space-y-3">
           {pipelineItems.map((item: any) => (
-            <div
+            <Link
+              href={`/tx/${item.id}`}
               key={item.id}
-              className={`p-4 rounded-lg bg-[#0E0B08] border border-subtle border-l-2 ${item.borderColor} flex items-center justify-between group hover:bg-[#1a1510] transition-all duration-200 cursor-pointer`}
+              className={`p-4 rounded-lg bg-[#0E0B08] border border-subtle border-l-2 ${item.borderColor} flex items-center justify-between group hover:bg-[#1a1510] transition-all duration-200 cursor-pointer block`}
             >
               <div className="flex items-center gap-4">
                 <div className={`w-2.5 h-2.5 rounded-full ${item.dotColor} shrink-0`} />
@@ -41,7 +43,7 @@ export default function RecoveryPipeline() {
                 <p className="font-semibold text-[#F0E7D6] text-sm">{item.amount}</p>
                 <p className={`text-xs mt-0.5 ${item.statusColor}`}>{item.status}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

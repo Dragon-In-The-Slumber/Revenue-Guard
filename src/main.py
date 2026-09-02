@@ -5,13 +5,23 @@ from src.config import settings
 from src.workers.recovery_tasks import run_recovery_pipeline, execute_graph_sync
 from src.models.transaction import Transaction
 from src.persistence.audit_store import audit_store
+from src.persistence.database import db
 import uuid
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await db.connect()
+    await audit_store.initialize()
+    yield
+    await db.disconnect()
 
 app = FastAPI(
     title="RevenueGuard API",
     description="Scalable API for AI Revenue Recovery",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(

@@ -16,7 +16,8 @@ class PolicyStore:
         await db.execute(CREATE_POLICY_TABLE_SQL)
         
         # Insert some default policies if the table is empty
-        count = await db.fetch_val("SELECT COUNT(*) FROM agent_policies")
+        rows = await db.fetch("SELECT COUNT(*) FROM agent_policies")
+        count = rows[0][0] if rows else 0
         if count == 0:
             await self.add_policy("Compliance", "Do not send WhatsApp messages if the transaction is over ₹50,000.")
             await self.add_policy("Compliance", "No outreach allowed during quiet hours (9 PM to 8 AM local time).")

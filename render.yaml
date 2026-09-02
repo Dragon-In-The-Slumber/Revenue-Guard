@@ -1,13 +1,5 @@
 services:
   # ----------------------------------------------------
-  # 0. Redis (Cache + Message Broker)
-  # ----------------------------------------------------
-  - type: redis
-    name: revenueguard-redis
-    ipAllowList: [] # Internal only
-    plan: free
-
-  # ----------------------------------------------------
   # 1. FastAPI Web Service (Agent API)
   # ----------------------------------------------------
   - type: web
@@ -24,20 +16,7 @@ services:
           name: revenueguard-db
           property: connectionString
       - key: REDIS_URL
-        fromService:
-          type: redis
-          name: revenueguard-redis
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: revenueguard-redis
-          property: connectionString
-      - key: CELERY_RESULT_BACKEND
-        fromService:
-          type: redis
-          name: revenueguard-redis
-          property: connectionString
+        sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: RAZORPAY_KEY_ID

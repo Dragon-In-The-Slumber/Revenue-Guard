@@ -1,54 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import WebhookSimulatorModal from "./WebhookSimulatorModal";
 
 export default function TriggerTestButton() {
-  const [loading, setLoading] = useState(false);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-  const triggerWebhook = async () => {
-    setLoading(true);
-    try {
-      const payload = {
-        transaction_id: `tx_test_${Math.floor(Math.random() * 100000)}`,
-        customer: { name: "Test User", email: "test@example.com", phone: "+919999999999", type: "B2C" },
-        payment: {
-          amount: 5000,
-          currency: "INR",
-          method: "UPI",
-          bank: "HDFC",
-          timestamp: new Date().toISOString(),
-          status: "failed",
-          error_code: "ISSUING_BANK_DOWNTIME",
-        },
-        merchant: { id: "mer_test", name: "Test Merchant" },
-      };
-
-      await fetch(`${apiUrl}/webhooks/razorpay/payment.failed`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-    } catch (error) {
-      console.error("Failed to trigger test:", error);
-    } finally {
-      setTimeout(() => setLoading(false), 1000); // small delay to prevent spam
-    }
-  };
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <button
-      onClick={triggerWebhook}
-      disabled={loading}
-      className={`px-4 py-2 rounded-md font-mono text-xs tracking-wider uppercase transition-all duration-300 ${
-        loading
-          ? "bg-[#1A1612] text-dim border border-subtle cursor-not-allowed"
-          : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/50"
-      }`}
-    >
-      {loading ? "Triggering..." : "Trigger Test Failure"}
-    </button>
+    <>
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="pill-btn primary text-xs uppercase tracking-widest shadow-[0_0_15px_rgba(0,240,255,0.4)]"
+      >
+        <span className="relative z-10 flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="m10 13-2 2 2 2"/><path d="m14 17 2-2-2-2"/></svg>
+          Simulator
+        </span>
+      </button>
+      <WebhookSimulatorModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    </>
   );
 }

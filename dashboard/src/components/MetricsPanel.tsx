@@ -48,17 +48,17 @@ export default function MetricsPanel() {
           key={idx}
           className="glass-panel p-5 group hover:border-[#D9A353]/30 transition-all duration-300 cursor-default"
         >
-          <h3 className="text-dim text-[11px] font-mono uppercase tracking-[0.15em]">
+          <h3 className="text-[#00F0FF]/80 text-[11px] font-mono uppercase tracking-[0.15em] mb-1">
             {m.label}
           </h3>
-          <p className="text-3xl font-bold mt-2 text-[#F0E7D6] group-hover:translate-x-1 transition-transform origin-left">
+          <p className="text-3xl font-bold mt-2 text-white group-hover:text-glow transition-all duration-300 transform group-hover:scale-105 origin-left">
             {m.value}
           </p>
           <div className="mt-3 flex items-center gap-2">
             <span className={`text-sm font-medium ${m.changeColor}`}>
               {m.change}
             </span>
-            <span className="text-dim text-xs">{m.subtitle}</span>
+            <span className="text-white/40 text-xs">{m.subtitle}</span>
           </div>
         </div>
       ))}

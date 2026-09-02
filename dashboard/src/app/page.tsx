@@ -1,69 +1,66 @@
-import Image from "next/image";
+import MetricsPanel from "../components/MetricsPanel";
+import RecoveryPipeline from "../components/RecoveryPipeline";
+import LiveEventFeed from "../components/LiveEventFeed";
+import AuditTrailViewer from "../components/AuditTrailViewer";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <main className="min-h-screen p-6 md:p-10 max-w-[1600px] mx-auto w-full flex flex-col gap-8">
+      {/* Premium Header */}
+      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+        <div>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+            RevenueGuard <span className="text-gradient">AI Command Center</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-slate-400 mt-2 text-lg">
+            Autonomous revenue recovery & intelligent payment routing
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        
+        {/* Status Indicator */}
+        <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
+          <div className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+          </div>
+          <span className="text-emerald-400 text-sm font-semibold uppercase tracking-wider">System Live</span>
         </div>
-      </main>
-    </div>
+      </header>
+
+      {/* Top Level Metrics (100% width) */}
+      <section>
+        <MetricsPanel />
+      </section>
+
+      {/* Middle Grid (60/40 Split) */}
+      <section className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-[500px]">
+        {/* Left Side: Pipeline Workflow (Span 3) */}
+        <div className="lg:col-span-3 glass-panel p-6 flex flex-col h-full">
+          <h2 className="text-xl font-bold mb-4 text-white">Active Recovery Pipeline</h2>
+          <div className="flex-1 overflow-y-auto no-scrollbar relative rounded-xl border border-white/5 bg-black/20 p-4">
+             <RecoveryPipeline />
+          </div>
+        </div>
+
+        {/* Right Side: Live Feed (Span 2) */}
+        <div className="lg:col-span-2 glass-panel p-6 flex flex-col h-full">
+          <h2 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
+            Live Intelligence Feed
+            <span className="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">Streaming</span>
+          </h2>
+          <div className="flex-1 overflow-hidden relative">
+            <LiveEventFeed />
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom Section: Audit Trail */}
+      <section className="glass-panel p-6">
+        <h2 className="text-xl font-bold mb-4 text-white">Cryptographic Audit Trail</h2>
+        <div className="overflow-x-auto">
+          <AuditTrailViewer />
+        </div>
+      </section>
+    </main>
   );
 }

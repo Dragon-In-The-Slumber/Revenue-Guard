@@ -10,15 +10,12 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: "RevenueGuard | AI Command Center",
-  description: "Autonomous revenue recovery system",
+  description: "Autonomous AI-powered revenue recovery for failed payments — built for the Razorpay AI Buildathon.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${outfit.variable} h-full antialiased dark`}
-    >
+    <html lang="en" className={`${outfit.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
   );

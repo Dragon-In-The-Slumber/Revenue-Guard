@@ -5,62 +5,86 @@ import AuditTrailViewer from "../components/AuditTrailViewer";
 
 export default function Home() {
   return (
-    <main className="min-h-screen p-6 md:p-10 max-w-[1600px] mx-auto w-full flex flex-col gap-8">
-      {/* Premium Header */}
-      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-            RevenueGuard <span className="text-gradient">AI Command Center</span>
+    <div className="min-h-screen flex flex-col">
+      {/* ─── Top Navigation Bar ─── */}
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-8 py-4 border-b border-subtle bg-[#0E0B08]/90 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-[#F0E7D6] text-lg font-bold tracking-tight">RevenueGuard</span>
+          <span className="text-gold font-mono text-sm">/ai</span>
+        </div>
+        <div className="flex items-center gap-6">
+          <a href="#metrics" className="text-dim text-sm hover:text-[#F0E7D6] transition-colors">Metrics</a>
+          <a href="#pipeline" className="text-dim text-sm hover:text-[#F0E7D6] transition-colors">Pipeline</a>
+          <a href="#audit" className="text-dim text-sm hover:text-[#F0E7D6] transition-colors">Audit Trail</a>
+          <div className="flex items-center gap-2 bg-[#14100B] border border-subtle px-3 py-1.5 rounded-full">
+            <div className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </div>
+            <span className="text-emerald-400 text-xs font-medium uppercase tracking-wider">Live</span>
+          </div>
+        </div>
+      </nav>
+
+      {/* ─── Main Content ─── */}
+      <main className="flex-1 p-6 md:p-10 max-w-[1440px] mx-auto w-full flex flex-col gap-10">
+
+        {/* ─── Hero Header ─── */}
+        <header className="pt-6 pb-2 animate-fade-in">
+          <p className="mono-label mb-4">AI REVENUE RECOVERY</p>
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-[1.1]">
+            Recover revenue.<br />
+            <span className="text-gold">Autonomously.</span>
           </h1>
-          <p className="text-slate-400 mt-2 text-lg">
-            Autonomous revenue recovery & intelligent payment routing
+          <p className="text-muted text-lg mt-4 max-w-2xl">
+            Multi-agent AI system that diagnoses payment failures, switches gateways silently,
+            and reaches out to customers — all without human intervention.
           </p>
-        </div>
-        
-        {/* Status Indicator */}
-        <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
-          <div className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+        </header>
+
+        {/* ─── Metrics Section ─── */}
+        <section id="metrics">
+          <p className="mono-label mb-4">01 / METRICS</p>
+          <MetricsPanel />
+        </section>
+
+        {/* ─── Pipeline + Live Feed (Split Layout) ─── */}
+        <section id="pipeline" className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Left: Pipeline (60%) */}
+          <div className="lg:col-span-3 flex flex-col gap-4">
+            <p className="mono-label">02 / ACTIVE PIPELINE</p>
+            <div className="glass-panel p-6 flex-1">
+              <RecoveryPipeline />
+            </div>
           </div>
-          <span className="text-emerald-400 text-sm font-semibold uppercase tracking-wider">System Live</span>
-        </div>
-      </header>
 
-      {/* Top Level Metrics (100% width) */}
-      <section>
-        <MetricsPanel />
-      </section>
-
-      {/* Middle Grid (60/40 Split) */}
-      <section className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-[500px]">
-        {/* Left Side: Pipeline Workflow (Span 3) */}
-        <div className="lg:col-span-3 glass-panel p-6 flex flex-col h-full">
-          <h2 className="text-xl font-bold mb-4 text-white">Active Recovery Pipeline</h2>
-          <div className="flex-1 overflow-y-auto no-scrollbar relative rounded-xl border border-white/5 bg-black/20 p-4">
-             <RecoveryPipeline />
+          {/* Right: Live Feed (40%) */}
+          <div className="lg:col-span-2 flex flex-col gap-4">
+            <p className="mono-label">03 / LIVE FEED</p>
+            <div className="glass-panel p-6 flex-1 max-h-[560px] overflow-hidden">
+              <LiveEventFeed />
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* Right Side: Live Feed (Span 2) */}
-        <div className="lg:col-span-2 glass-panel p-6 flex flex-col h-full">
-          <h2 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
-            Live Intelligence Feed
-            <span className="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">Streaming</span>
-          </h2>
-          <div className="flex-1 overflow-hidden relative">
-            <LiveEventFeed />
+        {/* ─── Audit Trail ─── */}
+        <section id="audit">
+          <p className="mono-label mb-4">04 / AUDIT TRAIL</p>
+          <div className="glass-panel p-6">
+            <AuditTrailViewer />
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* Bottom Section: Audit Trail */}
-      <section className="glass-panel p-6">
-        <h2 className="text-xl font-bold mb-4 text-white">Cryptographic Audit Trail</h2>
-        <div className="overflow-x-auto">
-          <AuditTrailViewer />
+      {/* ─── Footer ─── */}
+      <footer className="border-t border-subtle px-8 py-5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-dim text-sm">RevenueGuard</span>
+          <span className="text-gold text-sm">/</span>
+          <span className="text-dim text-sm">buildathon</span>
         </div>
-      </section>
-    </main>
+        <span className="text-dim text-xs font-mono">Built for the Razorpay AI Buildathon 2026</span>
+      </footer>
+    </div>
   );
 }

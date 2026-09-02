@@ -102,5 +102,5 @@ services:
 databases:
   - name: revenueguard-db
     databaseName: revenueguard
-    user: postgres
+    user: revenueguard_user
     plan: starter

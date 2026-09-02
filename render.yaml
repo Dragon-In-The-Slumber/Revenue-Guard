@@ -1,5 +1,13 @@
 services:
   # ----------------------------------------------------
+  # 0. Redis (Cache + Message Broker)
+  # ----------------------------------------------------
+  - type: redis
+    name: revenueguard-redis
+    ipAllowList: [] # Internal only
+    plan: starter
+
+  # ----------------------------------------------------
   # 1. FastAPI Web Service (Agent API)
   # ----------------------------------------------------
   - type: web
@@ -95,8 +103,4 @@ databases:
   - name: revenueguard-db
     databaseName: revenueguard
     user: postgres
-    plan: starter
-
-  - name: revenueguard-redis
-    type: redis
     plan: starter

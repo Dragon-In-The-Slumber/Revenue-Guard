@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, Any
 from datetime import datetime
 from src.graph.state import RevenueGuardState
@@ -21,10 +22,30 @@ def silent_recovery_node(state: RevenueGuardState) -> Dict[str, Any]:
     details = "Silent recovery not attempted."
     
     try:
-        if action_type == "SCHEDULED_RETRY":
+        # First, fetch real payment status from Razorpay
+        try:
+            payment_info = razorpay_client.fetch_payment(transaction.transaction_id)
+            payment_status = payment_info.get("status", "failed")
+        except Exception as e:
+            logger.warning(f"Failed to fetch payment from Razorpay: {e}")
+            payment_status = "failed"
+            
+        if payment_status == "captured" or payment_status == "authorized":
+            success = True
+            details = f"Payment {transaction.transaction_id} is already successful on Razorpay."
+        elif action_type == "SCHEDULED_RETRY":
             # Use BankAnalyzer to get optimal retry time
             retry_time = bank_analyzer.get_optimal_retry_time(transaction.payment.bank)
-            details = f"Scheduled smart retry for {retry_time} based on historical downtime patterns."
+            
+            # Generate a real payment link for the retry
+            payment_link = razorpay_client.create_payment_link(
+                amount=transaction.payment.amount,
+                customer=transaction.customer,
+                reference_id=transaction.transaction_id
+            )
+            
+            link_url = payment_link.get('short_url', 'N/A')
+            details = f"Scheduled smart retry for {retry_time}. Generated payment link for customer: {link_url}"
             success = True
             
         elif action_type == "SILENT_RETRY":

@@ -16,7 +16,7 @@ class RoutingDecision(BaseModel):
     reasoning: str = Field(description="Reasoning for this routing decision based on the policies and transaction data.")
 
 @fault_tolerant(fallback_status="FAILED", next_agent_on_fail="card_service")
-def orchestrator_node(state: RevenueGuardState) -> Dict[str, Any]:
+async def orchestrator_node(state: RevenueGuardState) -> Dict[str, Any]:
     """
     The Orchestrator acts as an LLM Semantic Router.
     It takes the initial webhook event, reads dynamic rules, and decides 
@@ -25,9 +25,7 @@ def orchestrator_node(state: RevenueGuardState) -> Dict[str, Any]:
     transaction = state["transaction"]
     payment_method = transaction.payment.method
     
-    # We must run this async query synchronously since LangGraph nodes are sync in this setup
-    loop = asyncio.get_event_loop()
-    policies = loop.run_until_complete(policy_store.get_active_policies("Orchestrator"))
+    policies = await policy_store.get_active_policies("Orchestrator")
     policy_texts = "\n".join([f"- {p['policy_text']}" for p in policies])
     
     llm = ChatAnthropic(
@@ -61,7 +59,7 @@ def orchestrator_node(state: RevenueGuardState) -> Dict[str, Any]:
     """
     
     try:
-        decision: RoutingDecision = structured_llm.invoke(prompt)
+        decision: RoutingDecision = await structured_llm.ainvoke(prompt)
         next_agent = decision.next_agent
         reasoning = decision.reasoning
     except Exception as e:

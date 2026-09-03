@@ -12,7 +12,7 @@ from src.agents.fault_handler import fault_tolerant
 logger = logging.getLogger(__name__)
 
 @fault_tolerant()
-def card_service_node(state: RevenueGuardState) -> Dict[str, Any]:
+async def card_service_node(state: RevenueGuardState) -> Dict[str, Any]:
     """
     Dedicated microservice for Card payment failures.
     Uses Razorpay Optimizer for gateway/bank downtimes,
@@ -47,7 +47,7 @@ def card_service_node(state: RevenueGuardState) -> Dict[str, Any]:
         Return a clear reasoning for your choice.
         """
         
-        diagnosis = structured_llm.invoke(prompt)
+        diagnosis = await structured_llm.ainvoke(prompt)
     except Exception as e:
         logger.error(f"[Card Service] LLM Diagnosis failed: {e}")
         # Fallback logic if LLM fails

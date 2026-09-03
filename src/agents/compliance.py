@@ -17,7 +17,7 @@ class ComplianceDecision(BaseModel):
     reasoning: str = Field(description="Detailed explanation of which policies were evaluated and why this decision was reached.")
 
 @fault_tolerant(fallback_status="ESCALATED", next_agent_on_fail="end")
-def compliance_node(state: RevenueGuardState) -> Dict[str, Any]:
+async def compliance_node(state: RevenueGuardState) -> Dict[str, Any]:
     """
     The Compliance Agent evaluates the planned action against dynamic
     Natural Language Policies from the database using an LLM.
@@ -28,8 +28,7 @@ def compliance_node(state: RevenueGuardState) -> Dict[str, Any]:
     action_type = proposed_action.action_type if proposed_action else "NONE"
     
     # Fetch dynamic policies for Compliance
-    loop = asyncio.get_event_loop()
-    policies = loop.run_until_complete(policy_store.get_active_policies("Compliance"))
+    policies = await policy_store.get_active_policies("Compliance")
     policy_texts = "\n".join([f"- {p['policy_text']}" for p in policies])
     
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -64,7 +63,7 @@ def compliance_node(state: RevenueGuardState) -> Dict[str, Any]:
     """
     
     try:
-        decision: ComplianceDecision = structured_llm.invoke(prompt)
+        decision: ComplianceDecision = await structured_llm.ainvoke(prompt)
         is_approved = decision.is_approved
         
         # If it was previously SUCCESS from silent recovery, we shouldn't override to APPROVED, we keep SUCCESS

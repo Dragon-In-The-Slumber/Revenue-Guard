@@ -12,11 +12,11 @@ def fault_tolerant(fallback_status="FAILED", next_agent_on_fail="compliance"):
     If the agent crashes, it logs the error to the audit trail,
     sets a fallback recovery status, and routes to a safe next agent (e.g. compliance).
     """
-    def decorator(func: Callable[[RevenueGuardState], dict]) -> Callable[[RevenueGuardState], dict]:
+    def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        def wrapper(state: RevenueGuardState, *args, **kwargs) -> dict:
+        async def wrapper(state: RevenueGuardState, *args, **kwargs) -> dict:
             try:
-                return func(state, *args, **kwargs)
+                return await func(state, *args, **kwargs)
             except Exception as e:
                 agent_name = func.__name__.replace("_node", "").replace("_", " ").title()
                 logger.error(f"[{agent_name}] Agent crashed: {e}")

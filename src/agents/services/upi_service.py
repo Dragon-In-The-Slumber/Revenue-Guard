@@ -12,7 +12,7 @@ from src.agents.fault_handler import fault_tolerant
 logger = logging.getLogger(__name__)
 
 @fault_tolerant()
-def upi_service_node(state: RevenueGuardState) -> Dict[str, Any]:
+async def upi_service_node(state: RevenueGuardState) -> Dict[str, Any]:
     """
     Dedicated microservice for UPI payment failures.
     Uses Razorpay Optimizer for NPCI/Switch downtimes,
@@ -46,7 +46,7 @@ def upi_service_node(state: RevenueGuardState) -> Dict[str, Any]:
         Return a clear reasoning for your choice.
         """
         
-        diagnosis = structured_llm.invoke(prompt)
+        diagnosis = await structured_llm.ainvoke(prompt)
     except Exception as e:
         logger.error(f"[UPI Service] LLM Diagnosis failed: {e}")
         action = "OPTIMIZER_RETRY" if "TIMEOUT" in error_code else "KONNECT_OUTREACH"

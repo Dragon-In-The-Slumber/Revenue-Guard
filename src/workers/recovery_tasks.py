@@ -27,8 +27,8 @@ async def execute_graph_async(transaction_data: dict):
     }
     
     try:
-        # Execute the workflow in a threadpool to not block FastAPI's event loop
-        final_state = await asyncio.to_thread(graph.invoke, initial_state)
+        # Execute the workflow asynchronously in the same event loop
+        final_state = await graph.ainvoke(initial_state)
         
         audit_trail_dicts = final_state.get("audit_trail", [])
         entries = []

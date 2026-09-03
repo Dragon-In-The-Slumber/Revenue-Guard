@@ -4,7 +4,7 @@ import datetime
 import asyncio
 
 async def test_webhook():
-    url = "http://localhost:8000/webhooks/razorpay/payment.failed"
+    url = "https://revenueguard-api-qbkp.onrender.com/webhooks/razorpay/payment.failed"
     
     # Real Razorpay webhook format for payment.failed
     tx_id = f"pay_{uuid.uuid4().hex[:14]}"
@@ -65,7 +65,7 @@ async def test_webhook():
             await asyncio.sleep(5)
             
             # Fetch audit trail
-            audit_url = f"http://localhost:8000/api/audit/{tx_id}"
+            audit_url = f"https://revenueguard-api-qbkp.onrender.com/api/audit/{tx_id}"
             audit_resp = await client.get(audit_url)
             audit_resp.raise_for_status()
             

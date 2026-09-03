@@ -12,7 +12,7 @@ from src.agents.fault_handler import fault_tolerant
 logger = logging.getLogger(__name__)
 
 @fault_tolerant()
-def netbanking_service_node(state: RevenueGuardState) -> Dict[str, Any]:
+async def netbanking_service_node(state: RevenueGuardState) -> Dict[str, Any]:
     """
     Dedicated microservice for Netbanking payment failures.
     Uses Razorpay Optimizer for aggregator downtimes,
@@ -46,7 +46,7 @@ def netbanking_service_node(state: RevenueGuardState) -> Dict[str, Any]:
         Return a clear reasoning for your choice.
         """
         
-        diagnosis = structured_llm.invoke(prompt)
+        diagnosis = await structured_llm.ainvoke(prompt)
     except Exception as e:
         logger.error(f"[Netbanking Service] LLM Diagnosis failed: {e}")
         action = "OPTIMIZER_RETRY" if "TIMEOUT" in error_code else "KONNECT_OUTREACH"

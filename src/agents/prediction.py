@@ -18,7 +18,7 @@ class PredictiveScore(BaseModel):
     reasoning: str = Field(description="Detailed reasoning for the score and recommendation.")
 
 @fault_tolerant(fallback_status="FAILED", next_agent_on_fail="outreach")
-def prediction_node(state: RevenueGuardState) -> Dict[str, Any]:
+async def prediction_node(state: RevenueGuardState) -> Dict[str, Any]:
     """
     The Prediction Agent handles "at_risk" transactions before they fully fail.
     It uses an LLM to analyze the context and suggest a preemptive action.
@@ -26,8 +26,7 @@ def prediction_node(state: RevenueGuardState) -> Dict[str, Any]:
     transaction = state["transaction"]
     
     # Fetch policies for Prediction agent
-    loop = asyncio.get_event_loop()
-    policies = loop.run_until_complete(policy_store.get_active_policies("Prediction"))
+    policies = await policy_store.get_active_policies("Prediction")
     policy_texts = "\n".join([f"- {p['policy_text']}" for p in policies])
     
     llm = ChatAnthropic(
@@ -54,7 +53,7 @@ def prediction_node(state: RevenueGuardState) -> Dict[str, Any]:
     """
     
     try:
-        prediction: PredictiveScore = structured_llm.invoke(prompt)
+        prediction: PredictiveScore = await structured_llm.ainvoke(prompt)
         score = prediction.risk_score
         action = prediction.recommended_action
         reasoning = prediction.reasoning

@@ -148,12 +148,15 @@ async def get_metrics():
     escalated = 0
 
     for r in recent:
-        if r["action"] == "Executed OPTIMIZER_RETRY":
+        action_str = str(r.get("action", "")).upper()
+        details_str = str(r.get("details", "")).upper()
+        
+        if "OPTIMIZER" in action_str or "SILENT" in action_str or "GATEWAY SWITCH" in action_str:
             silent_recoveries += 1
             total_recovered += 14500 # rough average placeholder
-        elif r["action"] == "Executed KONNECT_OUTREACH":
+        elif "KONNECT" in action_str or "WHATSAPP" in action_str or "OUTREACH" in action_str:
             outreach_conversions += 1
-        elif r["action"] == "Executed ESCALATE_TO_HUMAN" or "ESCALATED" in str(r.get("details", "")):
+        elif "ESCALATE" in action_str or "ESCALATED" in details_str:
             escalated += 1
             
     return {

@@ -99,7 +99,7 @@ export default function WebhookSimulatorModal({ isOpen, onClose }: { isOpen: boo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 pb-10 px-4 overflow-y-auto bg-black/70 backdrop-blur-md animate-fade-in">
       <div className="w-full max-w-lg relative overflow-hidden rounded-2xl" style={{ background: "linear-gradient(135deg, rgba(15,15,25,0.98), rgba(10,10,20,0.98))", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 25px 60px rgba(0,0,0,0.6), 0 0 60px rgba(0,240,255,0.05)" }}>
         {/* Top glow bar */}
         <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, #8B5CF6, #00F0FF, #10B981)" }} />

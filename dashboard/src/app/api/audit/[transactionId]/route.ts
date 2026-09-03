@@ -1,65 +1,73 @@
 import { NextResponse } from 'next/server';
 import { mockStore } from '@/lib/mockStore';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ transactionId: string }> }
 ) {
-  const { transactionId } = await params;
+  const resolvedParams = await params;
+  const transactionId = resolvedParams.transactionId;
+
+  if (API_URL) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch(`${API_URL}/api/audit/${transactionId}`, {
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+      clearTimeout(timeout);
+      
+      if (res.ok) {
+        const data = await res.json();
+        return NextResponse.json(data);
+      }
+    } catch (e) {
+      console.warn(`[api/audit] Real API unreachable for ${transactionId}, falling back to mockStore`, e);
+    }
+  }
+
+  // Fallback
   const trail = mockStore.getAuditTrail(transactionId);
-
-  const formattedTrail = trail.map((entry) => {
-    let reasoning: string | null = null;
-    let recommended_action: string | null = null;
-    let details = entry.details;
-
-    if (entry.reasoning) {
-      reasoning = entry.reasoning;
-    }
-
-    if (entry.recommended_action) {
-      recommended_action = entry.recommended_action;
-    }
-
-    return {
-      agent: entry.agent,
-      action: entry.action,
-      details,
-      reasoning,
-      confidence: entry.confidence || null,
-      recommended_action,
-      time: entry.timestamp.toLocaleTimeString("en-IN", {
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }),
-      dotColor: entry.dotColor,
-    };
-  });
-
-  return NextResponse.json({ trail: formattedTrail });
+  return NextResponse.json({ trail });
 }
 
-// POST to add manual audit entries (for Force Escalate / Retry buttons)
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ transactionId: string }> }
 ) {
-  const { transactionId } = await params;
-  const body = await request.json();
+  const resolvedParams = await params;
+  const transactionId = resolvedParams.transactionId;
+  const data = await request.json();
 
-  mockStore.addAuditEntry(transactionId, {
-    agent: body.agent || "Manual",
-    action: body.action || "Manual Action",
-    details: body.details || "",
-    timestamp: new Date(),
-    dotColor: body.dotColor || "bg-cyan-500",
-  });
-
-  if (body.updateTransaction) {
-    mockStore.updateTransactionStatus(transactionId, body.updateTransaction);
+  if (API_URL) {
+    try {
+      // In a real app, this would hit a POST /api/audit or similar endpoint
+      // We'll just pass it through if supported, but for now we'll do both
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
+      // Let's assume the real API doesn't have a POST /api/audit yet, 
+      // so we might just log it or we can add it to the real API later.
+      // For now, we'll try it.
+      await fetch(`${API_URL}/api/audit/${transactionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+    } catch (e) {
+      console.warn(`[api/audit] POST Real API unreachable for ${transactionId}`);
+    }
   }
 
-  return NextResponse.json({ status: "ok" });
+  // Always update mockStore as fallback
+  mockStore.addAuditEvent(transactionId, data);
+  if (data.updateTransaction) {
+    mockStore.updateTransaction(transactionId, data.updateTransaction);
+  }
+
+  return NextResponse.json({ status: "success" });
 }

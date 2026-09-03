@@ -12,17 +12,18 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 class RoutingDecision(BaseModel):
-    next_agent: str = Field(description="The exact name of the agent to route to: 'diagnostician' or 'prediction'.")
+    next_agent: str = Field(description="The exact name of the agent to route to: 'card_service', 'upi_service', 'netbanking_service', 'wallet_service', or 'prediction'.")
     reasoning: str = Field(description="Reasoning for this routing decision based on the policies and transaction data.")
 
-@fault_tolerant(fallback_status="FAILED", next_agent_on_fail="diagnostician")
+@fault_tolerant(fallback_status="FAILED", next_agent_on_fail="card_service")
 def orchestrator_node(state: RevenueGuardState) -> Dict[str, Any]:
     """
     The Orchestrator acts as an LLM Semantic Router.
     It takes the initial webhook event, reads dynamic rules, and decides 
-    whether it needs Diagnosis (for failures) or Prediction (for pre-failure signals).
+    which microservice should handle the payment failure.
     """
     transaction = state["transaction"]
+    payment_method = transaction.payment.method
     
     # We must run this async query synchronously since LangGraph nodes are sync in this setup
     loop = asyncio.get_event_loop()
@@ -41,10 +42,13 @@ def orchestrator_node(state: RevenueGuardState) -> Dict[str, Any]:
     
     prompt = f"""
     You are the Orchestrator for an autonomous payment recovery system.
-    Analyze the incoming transaction webhook and decide which agent should handle it next.
+    Analyze the incoming transaction webhook and decide which microservice should handle it.
     
     Options:
-    - 'diagnostician': For failed or denied payments that need recovery.
+    - 'card_service': For credit/debit card failures.
+    - 'upi_service': For UPI, VPA, Intent failures.
+    - 'netbanking_service': For netbanking failures.
+    - 'wallet_service': For wallet or pay_later failures.
     - 'prediction': For 'at_risk' or 'pending' payments that might fail soon.
     
     Transaction Data:
@@ -62,8 +66,17 @@ def orchestrator_node(state: RevenueGuardState) -> Dict[str, Any]:
         reasoning = decision.reasoning
     except Exception as e:
         logger.error(f"Orchestrator LLM routing failed: {e}")
-        next_agent = "diagnostician"
-        reasoning = f"Fallback routing used due to LLM error: {e}"
+        # Fallback routing based on method
+        if payment_method == "upi":
+            next_agent = "upi_service"
+        elif payment_method == "netbanking":
+            next_agent = "netbanking_service"
+        elif payment_method == "wallet":
+            next_agent = "wallet_service"
+        else:
+            next_agent = "card_service"
+            
+        reasoning = f"Fallback routing used due to LLM error. Routed to {next_agent} based on method {payment_method}"
         
     audit_entry = {
         "agent": "Orchestrator",

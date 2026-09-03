@@ -2,7 +2,7 @@ from typing import Optional, List, Dict, Any, Literal
 from pydantic import BaseModel, Field
 
 class RecoveryAction(BaseModel):
-    action_type: Literal["SILENT_RETRY", "WHATSAPP_MESSAGE", "EMAIL", "VOICE_CALL", "SCHEDULED_RETRY"]
+    action_type: Literal["SILENT_RETRY", "OPTIMIZER_RETRY", "KONNECT_OUTREACH", "WHATSAPP_MESSAGE", "EMAIL", "VOICE_CALL", "SCHEDULED_RETRY", "ESCALATE_TO_HUMAN"]
     channel: Optional[str] = None
     message_content: Optional[str] = None
     target_time: Optional[str] = None

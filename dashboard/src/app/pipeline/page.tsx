@@ -5,110 +5,115 @@ import Link from "next/link";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+const NODE_CONFIG = [
+  { key: "Orchestrator", label: "Orchestrator", sub: "Webhook Ingestion", color: "#00F0FF" },
+  { key: "Diagnostician", label: "Diagnostician", sub: "Claude 3.5 Sonnet", color: "#8B5CF6" },
+  { key: "Silent", label: "Silent Recovery", sub: "Gateway Switch", color: "#10B981", branch: true },
+  { key: "Outreach", label: "Outreach Agent", sub: "Customer Comms", color: "#F59E0B", branch: true },
+  { key: "Compliance", label: "Compliance", sub: "Rules & Escalation", color: "#D9A353" },
+];
+
 export default function PipelineGraphPage() {
-  const { data } = useSWR(`/api/pipeline`, fetcher, { refreshInterval: 3000 });
+  const { data } = useSWR(`/api/pipeline`, fetcher, { refreshInterval: 2000 });
+  const activeTx = data?.pipeline?.[0];
 
-  const activeTx = data?.pipeline?.[0]; // Get the most recent transaction
-
-  // Helper to determine if a node is currently active
-  const isActive = (nodeName: string) => {
+  const isActive = (key: string) => {
     if (!activeTx) return false;
-    const currentAgent = activeTx.agent.toLowerCase();
-    return currentAgent.includes(nodeName.toLowerCase()) || 
-           (nodeName === "Compliance" && activeTx.status.includes("Escalate"));
-  };
-
-  const getStyle = (nodeName: string) => {
-    if (isActive(nodeName)) {
-      return "border-[#00F0FF] bg-[#00F0FF]/10 text-white shadow-[0_0_15px_rgba(0,240,255,0.3)]";
-    }
-    return "border-white/10 bg-white/5 text-white/50 hover:border-white/30 transition-colors";
+    return activeTx.agent.toLowerCase().includes(key.toLowerCase()) ||
+      (key === "Compliance" && activeTx.status?.includes("Escalate"));
   };
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* ─── Top Navigation Bar ─── */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-8 py-4 border-b border-white/10 bg-[#05050A]/70 backdrop-blur-xl shadow-lg">
-        <div className="flex items-center gap-2">
-          <Link href="/" className="text-white text-lg font-bold tracking-tight hover:text-[#00F0FF] transition-colors text-glow">
-            RevenueGuard
+      {/* Top Bar */}
+      <header className="sticky top-0 z-30 flex items-center justify-between px-8 py-4 border-b border-white/5 bg-[#06060F]/80 backdrop-blur-xl">
+        <div>
+          <h1 className="text-base font-bold text-white tracking-tight">AI Agent Graph</h1>
+          <p className="text-white/35 text-xs font-mono mt-0.5">LangGraph state machine · live tracking</p>
+        </div>
+        {activeTx && (
+          <Link href={`/tx/${activeTx.id}`} className="pill-btn text-xs gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Tracking: {activeTx.id}
           </Link>
-          <span className="text-[#00F0FF] font-mono text-xs border border-[#00F0FF]/30 px-2 py-0.5 rounded-full bg-[#00F0FF]/10">/pipeline</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <Link href="/" className="text-white/60 text-sm hover:text-white transition-colors">← Back to Dashboard</Link>
-        </div>
-      </nav>
+        )}
+      </header>
 
-      <main className="flex-1 p-6 md:p-10 flex flex-col items-center justify-center animate-fade-in relative">
-        <header className="mb-12 text-center">
-          <p className="mono-label mb-2">STATE MACHINE</p>
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            LangGraph AI Architecture
-          </h1>
-          {activeTx && (
-            <p className="text-emerald-400 font-mono text-sm mt-4">
-              Tracking Active Transaction: {activeTx.id}
-            </p>
+      <main className="flex-1 p-8 flex flex-col items-center justify-center">
+        <div className="w-full max-w-3xl">
+          {/* Graph */}
+          <div className="flex flex-col items-center gap-0 font-mono text-sm">
+
+            {/* Node: Orchestrator */}
+            <GraphNode label="1. Orchestrator" sub="Webhook Ingestion" active={isActive("Orchestrator")} color="#00F0FF" />
+            <Arrow />
+
+            {/* Node: Diagnostician */}
+            <GraphNode label="2. Diagnostician" sub="Claude 3.5 Sonnet" active={isActive("Diagnostician")} color="#8B5CF6" />
+
+            {/* Fork */}
+            <div className="flex items-start gap-12 mt-0">
+              <div className="flex flex-col items-center">
+                <div className="w-px h-8 bg-white/10" />
+                <GraphNode label="3a. Silent Recovery" sub="Gateway Switch" active={isActive("Silent")} color="#10B981" compact />
+              </div>
+              <div className="w-px h-16 bg-white/10 mt-0 self-start" />
+              <div className="flex flex-col items-center">
+                <div className="w-px h-8 bg-white/10" />
+                <GraphNode label="3b. Outreach Agent" sub="Customer Comms" active={isActive("Outreach")} color="#F59E0B" compact />
+              </div>
+            </div>
+
+            {/* Rejoin */}
+            <Arrow />
+            <GraphNode label="4. Compliance" sub="Rules & Escalation" active={isActive("Compliance")} color="#D9A353" />
+          </div>
+
+          {/* Active transaction list */}
+          {data?.pipeline?.length > 0 && (
+            <div className="mt-12 glass-panel p-5">
+              <p className="mono-label mb-4">Active Transactions</p>
+              <div className="space-y-2">
+                {data.pipeline.slice(0, 5).map((tx: any) => (
+                  <Link key={tx.id} href={`/tx/${tx.id}`}
+                    className="flex items-center justify-between p-3 rounded-xl bg-white/3 border border-white/5 hover:border-white/15 hover:bg-white/6 transition-all group">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${tx.dotColor}`} />
+                      <span className="text-white font-mono text-xs">{tx.id}</span>
+                      <span className="text-white/30 text-xs">{tx.agent}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-white font-semibold text-xs">{tx.amount}</span>
+                      <span className={`text-xs ${tx.statusColor}`}>{tx.status}</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/20 group-hover:text-white/50 transition-colors"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
           )}
-        </header>
-
-        {/* Graph Container */}
-        <div className="relative flex flex-col items-center gap-12 w-full max-w-4xl font-mono text-sm">
-          
-          {/* Node: Orchestrator */}
-          <div className={`p-4 rounded-md border-2 w-64 text-center z-10 ${getStyle("Orchestrator")}`}>
-            <span className="block font-bold mb-1">1. Orchestrator</span>
-            <span className="text-xs opacity-70">Ingests Webhook</span>
-          </div>
-
-          <div className="w-0.5 h-12 bg-white/10 absolute top-[70px]"></div>
-
-          {/* Node: Diagnostician */}
-          <div className={`p-4 rounded-md border-2 w-64 text-center z-10 ${getStyle("Diagnostician")}`}>
-            <span className="block font-bold mb-1">2. Diagnostician</span>
-            <span className="text-xs opacity-70">Claude 3.5 Sonnet</span>
-          </div>
-
-          {/* Fork Lines */}
-          <div className="flex w-[300px] justify-between relative mt-12 mb-12">
-            <div className="w-[150px] h-0.5 bg-white/10 absolute top-0 right-1/2"></div>
-            <div className="w-[150px] h-0.5 bg-white/10 absolute top-0 left-1/2"></div>
-            <div className="w-0.5 h-12 bg-white/10 absolute top-0 left-0"></div>
-            <div className="w-0.5 h-12 bg-white/10 absolute top-0 right-0"></div>
-          </div>
-
-          <div className="flex w-full max-w-md justify-between -mt-24 z-10">
-            {/* Node: Silent Recovery */}
-            <div className={`p-4 rounded-md border-2 w-48 text-center ${getStyle("Silent")}`}>
-              <span className="block font-bold mb-1">3a. Silent Recovery</span>
-              <span className="text-xs opacity-70">API Gateway Switch</span>
-            </div>
-
-            {/* Node: Outreach */}
-            <div className={`p-4 rounded-md border-2 w-48 text-center ${getStyle("Outreach")}`}>
-              <span className="block font-bold mb-1">3b. Outreach</span>
-              <span className="text-xs opacity-70">Customer Comms</span>
-            </div>
-          </div>
-
-          {/* Join Lines */}
-          <div className="flex w-[300px] justify-between relative mt-12">
-            <div className="w-0.5 h-12 bg-white/10 absolute bottom-0 left-0"></div>
-            <div className="w-0.5 h-12 bg-white/10 absolute bottom-0 right-0"></div>
-            <div className="w-[150px] h-0.5 bg-white/10 absolute bottom-0 right-1/2"></div>
-            <div className="w-[150px] h-0.5 bg-white/10 absolute bottom-0 left-1/2"></div>
-          </div>
-          
-          <div className="w-0.5 h-12 bg-white/10 absolute bottom-[70px]"></div>
-
-          {/* Node: Compliance */}
-          <div className={`p-4 rounded-md border-2 w-64 text-center z-10 -mt-12 ${getStyle("Compliance")}`}>
-            <span className="block font-bold mb-1">4. Compliance</span>
-            <span className="text-xs opacity-70">Rules & Escalation</span>
-          </div>
         </div>
       </main>
     </div>
   );
+}
+
+function GraphNode({ label, sub, active, color, compact }: { label: string; sub: string; active: boolean; color: string; compact?: boolean }) {
+  return (
+    <div
+      className={`${compact ? "w-44" : "w-64"} p-4 rounded-2xl border-2 text-center transition-all duration-500`}
+      style={active
+        ? { borderColor: color, background: `${color}12`, boxShadow: `0 0 20px ${color}30` }
+        : { borderColor: "rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }
+      }
+    >
+      <p className={`font-bold text-sm mb-1 ${active ? "text-white" : "text-white/40"}`}>{label}</p>
+      <p className={`text-xs ${active ? "opacity-70" : "opacity-30"}`} style={active ? { color } : {}}>{sub}</p>
+      {active && <div className="w-1.5 h-1.5 rounded-full mx-auto mt-2" style={{ background: color, boxShadow: `0 0 8px ${color}` }} />}
+    </div>
+  );
+}
+
+function Arrow() {
+  return <div className="w-px h-8 bg-white/10" />;
 }

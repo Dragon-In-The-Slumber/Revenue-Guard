@@ -99,16 +99,16 @@ export default function WebhookSimulatorModal({ isOpen, onClose }: { isOpen: boo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 pb-10 px-4 overflow-y-auto bg-black/70 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-lg relative overflow-hidden rounded-2xl" style={{ background: "linear-gradient(135deg, rgba(15,15,25,0.98), rgba(10,10,20,0.98))", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 25px 60px rgba(0,0,0,0.6), 0 0 60px rgba(0,240,255,0.05)" }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
+      <div className="w-full max-w-lg relative rounded-2xl max-h-[90vh] flex flex-col" style={{ background: "linear-gradient(135deg, rgba(15,15,25,0.98), rgba(10,10,20,0.98))", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 25px 60px rgba(0,0,0,0.6), 0 0 60px rgba(0,240,255,0.05)" }}>
         {/* Top glow bar */}
-        <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, #8B5CF6, #00F0FF, #10B981)" }} />
+        <div className="h-0.5 w-full shrink-0" style={{ background: "linear-gradient(90deg, #8B5CF6, #00F0FF, #10B981)" }} />
 
         {/* Glow blobs */}
         <div className="absolute -top-16 -right-16 w-48 h-48 bg-[#00F0FF] rounded-full blur-[100px] opacity-10 pointer-events-none" />
         <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-[#8B5CF6] rounded-full blur-[100px] opacity-10 pointer-events-none" />
 
-        <div className="relative p-7">
+        <div className="relative p-7 overflow-y-auto">
           {/* Header */}
           <div className="flex items-start justify-between mb-6">
             <div>

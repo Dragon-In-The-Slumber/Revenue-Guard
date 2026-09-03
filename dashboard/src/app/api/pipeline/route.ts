@@ -16,7 +16,11 @@ export async function GET() {
       
       if (res.ok) {
         const data = await res.json();
-        return NextResponse.json(data);
+        if (data.pipeline && data.pipeline.length > 0) {
+          return NextResponse.json(data);
+        } else {
+          console.warn('[api/pipeline] Real API returned empty pipeline, falling back to mockStore');
+        }
       }
     } catch (e) {
       console.warn('[api/pipeline] Real API unreachable, falling back to mockStore', e);

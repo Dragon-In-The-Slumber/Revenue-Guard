@@ -22,7 +22,11 @@ export async function GET(
       
       if (res.ok) {
         const data = await res.json();
-        return NextResponse.json(data);
+        if (data.trail && data.trail.length > 0) {
+          return NextResponse.json(data);
+        } else {
+          console.warn(`[api/audit] Real API returned empty trail for ${transactionId}, falling back to mockStore`);
+        }
       }
     } catch (e) {
       console.warn(`[api/audit] Real API unreachable for ${transactionId}, falling back to mockStore`, e);

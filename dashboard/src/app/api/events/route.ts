@@ -16,7 +16,11 @@ export async function GET() {
       
       if (res.ok) {
         const data = await res.json();
-        return NextResponse.json(data);
+        if (data.events && data.events.length > 0) {
+          return NextResponse.json(data);
+        } else {
+          console.warn('[api/events] Real API returned empty events, falling back to mockStore');
+        }
       }
     } catch (e) {
       console.warn('[api/events] Real API unreachable, falling back to mockStore', e);

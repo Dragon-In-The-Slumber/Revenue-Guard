@@ -38,15 +38,52 @@ export interface EventRecord {
   dot: string;
 }
 
+import fs from "fs";
+import path from "path";
+import os from "os";
+
 // ─── Singleton Store ───
 class MockStore {
   private transactions: TransactionRecord[] = [];
   private auditTrails: Map<string, AuditEntry[]> = new Map();
   private policies: PolicyRecord[] = [];
   private nextPolicyId = 1;
+  private syncFilePath = path.join(os.tmpdir(), "revenueguard_mock_state.json");
 
   constructor() {
     this.seed();
+    this.loadFromFile();
+  }
+
+  private saveToFile() {
+    try {
+      const data = {
+        transactions: this.transactions,
+        auditTrails: Array.from(this.auditTrails.entries()),
+        policies: this.policies,
+        nextPolicyId: this.nextPolicyId,
+      };
+      fs.writeFileSync(this.syncFilePath, JSON.stringify(data), 'utf8');
+    } catch (e) {
+      console.warn("Could not sync mockStore to file:", e);
+    }
+  }
+
+  private loadFromFile() {
+    try {
+      if (fs.existsSync(this.syncFilePath)) {
+        const data = JSON.parse(fs.readFileSync(this.syncFilePath, 'utf8'));
+        this.transactions = data.transactions;
+        this.auditTrails = new Map(data.auditTrails);
+        // Fix date objects
+        this.transactions.forEach(t => t.createdAt = new Date(t.createdAt));
+        this.auditTrails.forEach(entries => {
+          entries.forEach(e => e.timestamp = new Date(e.timestamp));
+        });
+      }
+    } catch (e) {
+      console.warn("Could not load mockStore from file:", e);
+    }
   }
 
   private seed() {
@@ -149,15 +186,20 @@ class MockStore {
   addTransaction(tx: TransactionRecord) {
     this.transactions.unshift(tx);
     if (this.transactions.length > 50) this.transactions.pop();
+    this.saveToFile();
   }
 
   getTransactions(limit = 10): TransactionRecord[] {
+    this.loadFromFile();
     return this.transactions.slice(0, limit);
   }
 
   updateTransactionStatus(txId: string, update: Partial<TransactionRecord>) {
     const tx = this.transactions.find((t) => t.id === txId);
-    if (tx) Object.assign(tx, update);
+    if (tx) {
+      Object.assign(tx, update);
+      this.saveToFile();
+    }
   }
 
   // ─── Audit Trail ───
@@ -166,14 +208,17 @@ class MockStore {
       this.auditTrails.set(txId, []);
     }
     this.auditTrails.get(txId)!.push(entry);
+    this.saveToFile();
   }
 
   getAuditTrail(txId: string): AuditEntry[] {
+    this.loadFromFile();
     return this.auditTrails.get(txId) || [];
   }
 
   // ─── Events (derived from all audit trails) ───
   getRecentEvents(limit = 20): EventRecord[] {
+    this.loadFromFile();
     const allEntries: { txId: string; entry: AuditEntry }[] = [];
 
     this.auditTrails.forEach((entries, txId) => {
@@ -201,6 +246,7 @@ class MockStore {
 
   // ─── Metrics (derived from audit trails) ───
   getMetrics() {
+    this.loadFromFile();
     let silentRecoveries = 0;
     let outreachConversions = 0;
     let escalated = 0;

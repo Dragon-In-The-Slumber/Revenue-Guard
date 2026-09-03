@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import useSWR from "swr";
 import Link from "next/link";
 import AuditTrailViewer from "@/components/AuditTrailViewer";
@@ -10,13 +10,57 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 export default function TransactionPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const transactionId = resolvedParams.id;
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const { data, error, isLoading } = useSWR(`${apiUrl}/api/audit/${transactionId}`, fetcher, { refreshInterval: 5000 });
+  const { data, error, isLoading, mutate } = useSWR(`/api/audit/${transactionId}`, fetcher, { refreshInterval: 3000 });
+  const [actionLoading, setActionLoading] = useState("");
 
   const auditData = data?.trail || [];
 
   // Find the Diagnostician event to show the reasoning at the top
   const diagEvent = auditData.find((e: any) => e.agent === "Diagnostician" && e.reasoning);
+
+  const handleAction = async (action: "escalate" | "retry") => {
+    setActionLoading(action);
+    try {
+      await fetch(`/api/audit/${transactionId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          action === "escalate"
+            ? {
+                agent: "Manual Override",
+                action: "Escalated to Human",
+                details: `Manually escalated by operator. Transaction ${transactionId} flagged for urgent human review.`,
+                dotColor: "bg-red-500",
+                updateTransaction: {
+                  agent: "Manual Override",
+                  status: "Escalated to Human",
+                  statusColor: "text-red-400",
+                  dotColor: "bg-red-500",
+                  borderColor: "border-l-red-500",
+                },
+              }
+            : {
+                agent: "Manual Override",
+                action: "Payment Retry Initiated",
+                details: `Manual payment retry triggered by operator for transaction ${transactionId}. Re-attempting via alternate gateway.`,
+                dotColor: "bg-emerald-500",
+                updateTransaction: {
+                  agent: "Manual Override",
+                  status: "Retry Initiated",
+                  statusColor: "text-emerald-400",
+                  dotColor: "bg-emerald-500",
+                  borderColor: "border-l-emerald-500",
+                },
+              }
+        ),
+      });
+      mutate();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActionLoading("");
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -43,11 +87,19 @@ export default function TransactionPage({ params }: { params: Promise<{ id: stri
           </div>
           
           <div className="flex items-center gap-3">
-            <button className="pill-btn !py-2 !px-4 !text-xs !font-mono border-[#8B5CF6]/40 hover:border-[#8B5CF6] hover:shadow-[0_0_15px_rgba(139,92,246,0.3)]">
-              FORCE ESCALATE
+            <button 
+              onClick={() => handleAction("escalate")}
+              disabled={actionLoading === "escalate"}
+              className="pill-btn !py-2 !px-4 !text-xs !font-mono border-[#8B5CF6]/40 hover:border-[#8B5CF6] hover:shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+            >
+              {actionLoading === "escalate" ? "Escalating..." : "FORCE ESCALATE"}
             </button>
-            <button className="pill-btn !py-2 !px-4 !text-xs !font-mono border-[#10B981]/40 hover:border-[#10B981] hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-              RETRY PAYMENT
+            <button 
+              onClick={() => handleAction("retry")}
+              disabled={actionLoading === "retry"}
+              className="pill-btn !py-2 !px-4 !text-xs !font-mono border-[#10B981]/40 hover:border-[#10B981] hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+            >
+              {actionLoading === "retry" ? "Retrying..." : "RETRY PAYMENT"}
             </button>
           </div>
         </header>

@@ -7,8 +7,7 @@ import Link from "next/link";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function SettingsPage() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const { data, error, isLoading, mutate } = useSWR(`${apiUrl}/api/policies`, fetcher, { refreshInterval: 5000 });
+  const { data, error, isLoading, mutate } = useSWR(`/api/policies`, fetcher, { refreshInterval: 5000 });
   
   const [newPolicy, setNewPolicy] = useState("");
   const [agentName, setAgentName] = useState("Compliance");
@@ -22,7 +21,7 @@ export default function SettingsPage() {
     
     setIsSubmitting(true);
     try {
-      await fetch(`${apiUrl}/api/policies`, {
+      await fetch(`/api/policies`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ agent_name: agentName, policy_text: newPolicy }),
@@ -38,7 +37,7 @@ export default function SettingsPage() {
 
   const handleDeletePolicy = async (id: number) => {
     try {
-      await fetch(`${apiUrl}/api/policies/${id}`, { method: "DELETE" });
+      await fetch(`/api/policies/${id}`, { method: "DELETE" });
       mutate();
     } catch (err) {
       console.error(err);

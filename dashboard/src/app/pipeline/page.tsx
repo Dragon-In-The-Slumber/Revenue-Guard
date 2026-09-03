@@ -2,13 +2,11 @@
 
 import useSWR from "swr";
 import Link from "next/link";
-import { useMemo } from "react";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function PipelineGraphPage() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const { data } = useSWR(`${apiUrl}/api/pipeline`, fetcher, { refreshInterval: 5000 });
+  const { data } = useSWR(`/api/pipeline`, fetcher, { refreshInterval: 3000 });
 
   const activeTx = data?.pipeline?.[0]; // Get the most recent transaction
 
@@ -22,30 +20,30 @@ export default function PipelineGraphPage() {
 
   const getStyle = (nodeName: string) => {
     if (isActive(nodeName)) {
-      return "border-gold bg-gold/10 text-[#F0E7D6] shadow-[0_0_15px_rgba(217,163,83,0.3)]";
+      return "border-[#00F0FF] bg-[#00F0FF]/10 text-white shadow-[0_0_15px_rgba(0,240,255,0.3)]";
     }
-    return "border-subtle bg-[#1A1612] text-dim hover:border-gold/50 transition-colors";
+    return "border-white/10 bg-white/5 text-white/50 hover:border-white/30 transition-colors";
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0806]">
+    <div className="min-h-screen flex flex-col">
       {/* ─── Top Navigation Bar ─── */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-8 py-4 border-b border-subtle bg-[#0E0B08]/90 backdrop-blur-sm">
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-8 py-4 border-b border-white/10 bg-[#05050A]/70 backdrop-blur-xl shadow-lg">
         <div className="flex items-center gap-2">
-          <Link href="/" className="text-[#F0E7D6] text-lg font-bold tracking-tight hover:text-gold transition-colors">
+          <Link href="/" className="text-white text-lg font-bold tracking-tight hover:text-[#00F0FF] transition-colors text-glow">
             RevenueGuard
           </Link>
-          <span className="text-gold font-mono text-sm">/pipeline</span>
+          <span className="text-[#00F0FF] font-mono text-xs border border-[#00F0FF]/30 px-2 py-0.5 rounded-full bg-[#00F0FF]/10">/pipeline</span>
         </div>
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-dim text-sm hover:text-[#F0E7D6] transition-colors">← Back to Dashboard</Link>
+          <Link href="/" className="text-white/60 text-sm hover:text-white transition-colors">← Back to Dashboard</Link>
         </div>
       </nav>
 
       <main className="flex-1 p-6 md:p-10 flex flex-col items-center justify-center animate-fade-in relative">
         <header className="mb-12 text-center">
           <p className="mono-label mb-2">STATE MACHINE</p>
-          <h1 className="text-3xl font-bold tracking-tight text-[#F0E7D6]">
+          <h1 className="text-3xl font-bold tracking-tight text-white">
             LangGraph AI Architecture
           </h1>
           {activeTx && (
@@ -64,7 +62,7 @@ export default function PipelineGraphPage() {
             <span className="text-xs opacity-70">Ingests Webhook</span>
           </div>
 
-          <div className="w-0.5 h-12 bg-subtle absolute top-[70px]"></div>
+          <div className="w-0.5 h-12 bg-white/10 absolute top-[70px]"></div>
 
           {/* Node: Diagnostician */}
           <div className={`p-4 rounded-md border-2 w-64 text-center z-10 ${getStyle("Diagnostician")}`}>
@@ -74,10 +72,10 @@ export default function PipelineGraphPage() {
 
           {/* Fork Lines */}
           <div className="flex w-[300px] justify-between relative mt-12 mb-12">
-            <div className="w-[150px] h-0.5 bg-subtle absolute top-0 right-1/2"></div>
-            <div className="w-[150px] h-0.5 bg-subtle absolute top-0 left-1/2"></div>
-            <div className="w-0.5 h-12 bg-subtle absolute top-0 left-0"></div>
-            <div className="w-0.5 h-12 bg-subtle absolute top-0 right-0"></div>
+            <div className="w-[150px] h-0.5 bg-white/10 absolute top-0 right-1/2"></div>
+            <div className="w-[150px] h-0.5 bg-white/10 absolute top-0 left-1/2"></div>
+            <div className="w-0.5 h-12 bg-white/10 absolute top-0 left-0"></div>
+            <div className="w-0.5 h-12 bg-white/10 absolute top-0 right-0"></div>
           </div>
 
           <div className="flex w-full max-w-md justify-between -mt-24 z-10">
@@ -96,13 +94,13 @@ export default function PipelineGraphPage() {
 
           {/* Join Lines */}
           <div className="flex w-[300px] justify-between relative mt-12">
-            <div className="w-0.5 h-12 bg-subtle absolute bottom-0 left-0"></div>
-            <div className="w-0.5 h-12 bg-subtle absolute bottom-0 right-0"></div>
-            <div className="w-[150px] h-0.5 bg-subtle absolute bottom-0 right-1/2"></div>
-            <div className="w-[150px] h-0.5 bg-subtle absolute bottom-0 left-1/2"></div>
+            <div className="w-0.5 h-12 bg-white/10 absolute bottom-0 left-0"></div>
+            <div className="w-0.5 h-12 bg-white/10 absolute bottom-0 right-0"></div>
+            <div className="w-[150px] h-0.5 bg-white/10 absolute bottom-0 right-1/2"></div>
+            <div className="w-[150px] h-0.5 bg-white/10 absolute bottom-0 left-1/2"></div>
           </div>
           
-          <div className="w-0.5 h-12 bg-subtle absolute bottom-[70px]"></div>
+          <div className="w-0.5 h-12 bg-white/10 absolute bottom-[70px]"></div>
 
           {/* Node: Compliance */}
           <div className={`p-4 rounded-md border-2 w-64 text-center z-10 -mt-12 ${getStyle("Compliance")}`}>

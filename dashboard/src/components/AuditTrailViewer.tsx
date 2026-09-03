@@ -4,9 +4,8 @@ import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export default function AuditTrailViewer({ transactionId = "tx_98f7" }: { transactionId?: string }) {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const { data, error, isLoading } = useSWR(`${apiUrl}/api/audit/${transactionId}`, fetcher, { refreshInterval: 5000 });
+export default function AuditTrailViewer({ transactionId = "tx_demo_001" }: { transactionId?: string }) {
+  const { data, error, isLoading } = useSWR(`/api/audit/${transactionId}`, fetcher, { refreshInterval: 3000 });
 
   const auditData = data?.trail || [];
 

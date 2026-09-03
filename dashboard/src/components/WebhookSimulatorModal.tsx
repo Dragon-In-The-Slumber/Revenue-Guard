@@ -4,6 +4,8 @@ import { useState } from "react";
 
 export default function WebhookSimulatorModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [formData, setFormData] = useState({
     amount: "5000",
     error_code: "ISSUING_BANK_DOWNTIME",
@@ -15,6 +17,8 @@ export default function WebhookSimulatorModal({ isOpen, onClose }: { isOpen: boo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg("");
+    setSuccess(false);
     
     try {
       const payload = {
@@ -32,18 +36,28 @@ export default function WebhookSimulatorModal({ isOpen, onClose }: { isOpen: boo
         merchant: { id: "mer_test", name: "Test Merchant" },
       };
 
-      await fetch(`/api/trigger-test`, {
+      const response = await fetch(`/api/trigger-test`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to trigger webhook");
+      }
+
+      const data = await response.json();
+      setSuccess(true);
+      setLoading(false);
       
+      // Auto-close after showing success
       setTimeout(() => {
-        setLoading(false);
+        setSuccess(false);
         onClose();
-      }, 1000);
-    } catch (error) {
+      }, 2000);
+    } catch (error: any) {
       console.error("Failed to trigger test:", error);
+      setErrorMsg(error.message || "An error occurred");
       setLoading(false);
     }
   };
@@ -64,6 +78,17 @@ export default function WebhookSimulatorModal({ isOpen, onClose }: { isOpen: boo
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">
+            {errorMsg && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-lg text-sm">
+                {errorMsg}
+              </div>
+            )}
+            {success && (
+              <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 p-3 rounded-lg text-sm flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6 9 17l-5-5"/></svg>
+                Webhook injected! AI agents are now processing...
+              </div>
+            )}
             <div>
               <label className="block text-xs font-mono uppercase tracking-wider text-[#00F0FF]/80 mb-2">Amount (₹)</label>
               <input 
@@ -85,6 +110,8 @@ export default function WebhookSimulatorModal({ isOpen, onClose }: { isOpen: boo
                 <option value="ISSUING_BANK_DOWNTIME">ISSUING_BANK_DOWNTIME (Triggers Retry)</option>
                 <option value="INSUFFICIENT_FUNDS">INSUFFICIENT_FUNDS (Triggers Outreach)</option>
                 <option value="SUSPECTED_FRAUD">SUSPECTED_FRAUD (Triggers Escalation)</option>
+                <option value="UPI_APP_TIMEOUT">UPI_APP_TIMEOUT (Triggers Retry)</option>
+                <option value="EXPIRED_CARD">EXPIRED_CARD (Triggers Outreach)</option>
                 <option value="UNKNOWN_ERROR">UNKNOWN_ERROR</option>
               </select>
             </div>
@@ -102,10 +129,10 @@ export default function WebhookSimulatorModal({ isOpen, onClose }: { isOpen: boo
             
             <button 
               type="submit" 
-              disabled={loading}
+              disabled={loading || success}
               className="w-full pill-btn primary mt-6"
             >
-              {loading ? "Simulating AI Response..." : "Inject Webhook"}
+              {loading ? "Simulating AI Response..." : success ? "✓ Injected!" : "Inject Webhook"}
             </button>
           </form>
         </div>

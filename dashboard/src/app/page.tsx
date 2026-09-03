@@ -3,6 +3,7 @@ import RecoveryPipeline from "../components/RecoveryPipeline";
 import LiveEventFeed from "../components/LiveEventFeed";
 import AuditTrailViewer from "../components/AuditTrailViewer";
 import TriggerTestButton from "../components/TriggerTestButton";
+import BatchSimulatorButton from "../components/BatchSimulatorButton";
 import Link from "next/link";
 
 export default function Home() {
@@ -23,6 +24,14 @@ export default function Home() {
             Agent Settings
           </Link>
           <Link href="/pipeline" className="text-[#00F0FF] text-sm hover:text-white transition-colors font-mono">Graph View ↗</Link>
+          {/* Demo Mode Badge */}
+          <div className="flex items-center gap-2 bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 px-3 py-1.5 rounded-full">
+            <div className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8B5CF6] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8B5CF6]"></span>
+            </div>
+            <span className="text-[#8B5CF6] text-xs font-medium uppercase tracking-wider">Demo Mode</span>
+          </div>
           <div className="flex items-center gap-2 bg-[#00F0FF]/10 border border-[#00F0FF]/30 px-3 py-1.5 rounded-full shadow-[0_0_10px_rgba(0,240,255,0.2)]">
             <div className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00F0FF] opacity-75"></span>
@@ -61,7 +70,10 @@ export default function Home() {
           <div className="lg:col-span-3 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <p className="mono-label">02 / ACTIVE PIPELINE</p>
-              <TriggerTestButton />
+              <div className="flex items-center gap-3">
+                <BatchSimulatorButton />
+                <TriggerTestButton />
+              </div>
             </div>
             <div className="glass-panel p-6 flex-1">
               <RecoveryPipeline />

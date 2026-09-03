@@ -5,8 +5,7 @@ import useSWR from "swr";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function LiveEventFeed() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const { data, error, isLoading } = useSWR(`${apiUrl}/api/events`, fetcher, { refreshInterval: 5000 });
+  const { data, error, isLoading } = useSWR(`/api/events`, fetcher, { refreshInterval: 2000 });
 
   const liveEvents = data?.events || [];
 

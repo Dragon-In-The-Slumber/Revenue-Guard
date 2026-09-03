@@ -1,27 +1,26 @@
 import { NextResponse } from 'next/server';
+import { simulatePipeline } from '@/lib/mockPipeline';
 
 export async function POST(request: Request) {
   try {
     const payload = await request.json();
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-    const response = await fetch(`${apiUrl}/webhooks/razorpay/payment.failed`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+    // Run the simulated pipeline (non-blocking — runs in background via promise)
+    // We don't await it so the response returns immediately like the real API
+    simulatePipeline(payload).catch((err) =>
+      console.error("Pipeline simulation error:", err)
+    );
+
+    return NextResponse.json({
+      status: "accepted",
+      task_id: `sync-${Math.random().toString(36).substring(2, 10)}`,
+      transaction_id: payload.transaction_id,
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return NextResponse.json({ error: 'Failed to forward webhook', details: errorText }, { status: response.status });
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
   } catch (error: any) {
     console.error('Trigger Test API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error', message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error', message: error.message },
+      { status: 500 }
+    );
   }
 }

@@ -6,8 +6,7 @@ import Link from "next/link";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function RecoveryPipeline() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const { data, error, isLoading } = useSWR(`${apiUrl}/api/pipeline`, fetcher, { refreshInterval: 5000 });
+  const { data, error, isLoading } = useSWR(`/api/pipeline`, fetcher, { refreshInterval: 2000 });
 
   const pipelineItems = data?.pipeline || [];
 

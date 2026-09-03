@@ -2,8 +2,8 @@ import MetricsPanel from "../components/MetricsPanel";
 import RecoveryPipeline from "../components/RecoveryPipeline";
 import LiveEventFeed from "../components/LiveEventFeed";
 import AuditTrailViewer from "../components/AuditTrailViewer";
-import TriggerTestButton from "../components/TriggerTestButton";
 import BatchSimulatorButton from "../components/BatchSimulatorButton";
+import InlineSimulator from "../components/InlineSimulator";
 
 export default function Home() {
   return (
@@ -16,12 +16,16 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-3">
           <BatchSimulatorButton />
-          <TriggerTestButton />
         </div>
       </header>
 
       {/* ─── Main Content ─── */}
       <main className="flex-1 p-6 md:p-8 flex flex-col gap-8">
+        
+        {/* ─── Inline Simulator ─── */}
+        <section className="animate-fade-in">
+          <InlineSimulator />
+        </section>
 
         {/* ─── Metrics Row ─── */}
         <section className="animate-fade-in stagger-1">

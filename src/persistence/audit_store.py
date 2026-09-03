@@ -23,13 +23,15 @@ class AuditStore:
 
     async def log_entry(self, transaction_id: str, entry: AuditEntry):
         """Insert a single audit entry into PostgreSQL."""
+        # Convert string timestamp to datetime object for asyncpg
+        ts = datetime.fromisoformat(entry.timestamp.replace('Z', '+00:00')) if isinstance(entry.timestamp, str) else entry.timestamp
         await db.execute(
             "INSERT INTO audit_trail (transaction_id, agent, action, details, timestamp) VALUES ($1, $2, $3, $4, $5)",
             transaction_id,
             entry.agent,
             entry.action,
             entry.details,
-            entry.timestamp
+            ts
         )
 
     async def log_batch(self, transaction_id: str, entries: list[AuditEntry]):

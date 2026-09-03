@@ -28,6 +28,6 @@ export async function GET() {
   }
 
   // Fallback
-  const events = mockStore.getEvents(20);
+  const events = mockStore.getRecentEvents(20);
   return NextResponse.json({ events });
 }

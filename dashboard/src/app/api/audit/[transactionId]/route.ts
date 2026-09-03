@@ -68,9 +68,9 @@ export async function POST(
   }
 
   // Always update mockStore as fallback
-  mockStore.addAuditEvent(transactionId, data);
+  mockStore.addAuditEntry(transactionId, data);
   if (data.updateTransaction) {
-    mockStore.updateTransaction(transactionId, data.updateTransaction);
+    mockStore.updateTransactionStatus(transactionId, data.updateTransaction);
   }
 
   return NextResponse.json({ status: "success" });
